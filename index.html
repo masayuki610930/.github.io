@@ -7,42 +7,166 @@
 
 <body>
 <div id="map" style="width:800px; height:600px"></div>
+<input type="button" value="tone" id="toneButton" text="tone" onclick="torgToneButton()"></input>
 
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="http://www.softsynth.com/webaudio/webaudio_tools.js"></script>
 
 <script type="text/javascript" charset="utf-8" src="http://js.api.olp.yahooapis.jp/OpenLocalPlatform/V1/jsapi?appid=dj0zaiZpPW5zUU9WWDlpTUx6RiZzPWNvbnN1bWVyc2VjcmV0Jng9ZTk-"></script>
 
 <script type="text/javascript">
 
-var ymap = null;
+  // tone generator
+  var oscillator;
+  var amp;
+  var isPlay = false;
 
-window.onload = function(){
+  // map
+  var ymap = null;
+  var markers = null;
+
+  window.onload = function(){
 
     initializeMap();
 
-
-
-    var markers = new Array();
+    markers = new Array();
+    ///*
     markers.push( new Y.Marker(new Y.LatLng(35.64997652994234,139.72116702175174) ));
     markers.push( new Y.Marker(new Y.LatLng(35.74997652994234,139.82116702175174) ));
     markers.push( new Y.Marker(new Y.LatLng(35.94997652994234,139.42116702175174) ));
     markers.push( new Y.Marker(new Y.LatLng(35.74997652994234,139.52116702175174) ));
     ymap.addFeatures( markers );
-}
+    //*/
 
 
-function initializeMap(){
-  ymap = new Y.Map("map", {
-  configure : {
-      doubleClickZoom : true,
-      scrollWheelZoom : true,
-      singleClickPan : true,
-      dragging : true,
-      continuousZoom : true,
-      enableFlickScroll : true
+    // init once the page has finished loading.
+    initAudio();
+
+  }
+
+
+  function initializeMap(){
+    ymap = new Y.Map("map", {
+    configure : {
+        doubleClickZoom : true,
+        scrollWheelZoom : true,
+        singleClickPan : false,
+        dragging : true,
+        continuousZoom : true,
+        enableFlickScroll : true
+      }
+    });
+    ymap.drawMap(new Y.LatLng(35.66572, 139.73100), 11, Y.LayerSetId.NORMAL);
+
+
+    ymap.bind('click', function(latlng){
+      ymap.removeFeature ( markers );
+      var marker = new Y.Marker( latlng );
+      markers.push( marker );
+      ymap.addFeatures( markers );
+    });
+
+
+  }
+
+
+
+  ////////////////////////////////////
+
+  // Create an oscillator and an amplifier.
+  function initAudio()
+  {
+      // Use audioContext from webaudio_tools.js
+      if( audioContext )
+      {
+          oscillator = audioContext.createOscillator();
+          fixOscillator(oscillator);
+          oscillator.frequency.value = 440;
+          amp = audioContext.createGain();
+          amp.gain.value = 0;
+
+          // Connect oscillator to amp and amp to the mixer of the audioContext.
+          // This is like connecting cables between jacks on a modular synth.
+          oscillator.connect(amp);
+          amp.connect(audioContext.destination);
+          oscillator.start(0);
+          writeMessageToID( "soundStatus", "<p>Audio initialized.</p>");
+      }
+  }
+
+  // Set the frequency of the oscillator and start it running.
+  function startTone( frequency )
+  {
+      var now = audioContext.currentTime;
+
+      oscillator.frequency.setValueAtTime(frequency, now);
+
+      // Ramp up the gain so we can hear the sound.
+      // We can ramp smoothly to the desired value.
+      // First we should cancel any previous scheduled events that might interfere.
+      amp.gain.cancelScheduledValues(now);
+      // Anchor beginning of ramp at current value.
+      amp.gain.setValueAtTime(amp.gain.value, now);
+      amp.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.1);
+
+      writeMessageToID( "soundStatus", "<p>Play tone at frequency = " + frequency  + "</p>");
+  }
+
+  function stopTone()
+  {
+      var now = audioContext.currentTime;
+      amp.gain.cancelScheduledValues(now);
+      amp.gain.setValueAtTime(amp.gain.value, now);
+      amp.gain.linearRampToValueAtTime(0.0, audioContext.currentTime + 0.25);
+      writeMessageToID( "soundStatus", "<p>Stop tone.</p>");
+  }
+
+
+  function torgToneButton(){
+    if( isPlay == false ){
+      isPlay = true;
+      playSound();
+    }else{
+      isPlay = false;
+      stopTone();
     }
-  });
-  ymap.drawMap(new Y.LatLng(35.66572, 139.73100), 11, Y.LayerSetId.NORMAL);
-}
+
+  }
+
+
+  function playSound(){
+    //35.978617133825935, Lon: 139.22
+    //35.56077475385849, Lon: 140.129
+
+    i=139.22;
+    var hoge = setInterval( function(  ){
+      stopTone();
+
+      for( var j=35.56 ; j<35.97 ; j+=0.05){
+          for( var k=0 ; k<markers.length ; k++ ){
+
+            var latLng = markers[k].getLatLng();
+            if( i <= latLng.lng() && latLng.lng() < (i+0.05)  && j <= latLng.lat() && latLng.lat() < (j+0.05) ){
+              startTone( Math.floor((latLng.lat()-35)*500)  );
+            }
+
+
+
+          }
+        
+      }
+
+
+      i += 0.05;
+      if( 140.13 <= i  ){
+        clearInterval(hoge);
+      }
+    },400);
+
+
+    isPlay = false;
+    stopTone();
+  }
 
 
 </script>
