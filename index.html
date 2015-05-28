@@ -1,15 +1,49 @@
 <!DOCTYPE html>
 <html>
-<body>
-<div id="map" style="width:400px; height:300px"></div>
 
-<script type="text/javascript" charset="utf-8"
- src="http://js.api.olp.yahooapis.jp/OpenLocalPlatform/V1/jsapi?appid=dj0zaiZpPW5zUU9WWDlpTUx6RiZzPWNvbnN1bWVyc2VjcmV0Jng9ZTk-"></script>
+<head>
+<meta name="viewport" content="initial-scale=1.0,user-scalable=no">
+</head>
+
+<body>
+<div id="map" style="width:800px; height:600px"></div>
+
+
+<script type="text/javascript" charset="utf-8" src="http://js.api.olp.yahooapis.jp/OpenLocalPlatform/V1/jsapi?appid=dj0zaiZpPW5zUU9WWDlpTUx6RiZzPWNvbnN1bWVyc2VjcmV0Jng9ZTk-"></script>
+
 <script type="text/javascript">
+
+var ymap = null;
+
 window.onload = function(){
-    var ymap = new Y.Map("map");
-    ymap.drawMap(new Y.LatLng(35.66572, 139.73100), 17, Y.LayerSetId.NORMAL);
+
+    initializeMap();
+
+
+
+    var markers = new Array();
+    markers.push( new Y.Marker(new Y.LatLng(35.64997652994234,139.72116702175174) ));
+    markers.push( new Y.Marker(new Y.LatLng(35.74997652994234,139.82116702175174) ));
+    markers.push( new Y.Marker(new Y.LatLng(35.94997652994234,139.42116702175174) ));
+    markers.push( new Y.Marker(new Y.LatLng(35.74997652994234,139.52116702175174) ));
+    ymap.addFeatures( markers );
 }
+
+
+function initializeMap(){
+  ymap = new Y.Map("map", {
+  configure : {
+      doubleClickZoom : true,
+      scrollWheelZoom : true,
+      singleClickPan : true,
+      dragging : true,
+      continuousZoom : true,
+      enableFlickScroll : true
+    }
+  });
+  ymap.drawMap(new Y.LatLng(35.66572, 139.73100), 11, Y.LayerSetId.NORMAL);
+}
+
 
 </script>
 </body>
